@@ -8,6 +8,11 @@ const UserSchema = new Schema(
             type: String,
             unique: true,
         },
+        role: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user"
+        },
         firstName: String,
         lastName: String,
         password: String,
