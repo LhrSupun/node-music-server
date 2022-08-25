@@ -2,15 +2,7 @@ const jwt = require('jsonwebtoken');
 const randomString = require('randomstring');
 const bcrypt = require("bcryptjs");
 
-const getToken = (userId, key, expiresIn) => jwt.sign(
-    {
-        userId,
-    },
-    key,
-    {
-        expiresIn,
-    },
-);
+const getToken = (data, key, expiresIn) => jwt.sign({ userId: data.userId, email: data.email, role: data.role }, key, { expiresIn });
 
 const verifyToken = () => {
     const verificationToken = randomString.generate({
@@ -30,8 +22,14 @@ const encryptPassowrd = async (password, cycles = 10) => {
     return encrypted;
 }
 
+const comparePassword = async (currant, received) => {
+    const validPassword = await bcrypt.compare(currant, received);
+    return validPassword ? false : true;
+}
+
 module.exports = {
     getToken,
     verifyToken,
     encryptPassowrd,
+    comparePassword,
 };
