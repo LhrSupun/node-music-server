@@ -19,7 +19,7 @@ mongoose.connect(connectionURI, {
     useUnifiedTopology: true
 });
 
-console.log({ connectionURI });
+// console.log({ connectionURI });
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
