@@ -15,6 +15,10 @@ const {
 
 const router = express.Router();
 
+
+// @route POST api/user/
+// @desc create new user
+// @access Public
 router.post('/', async (req, res) => {
     try {
 
@@ -25,9 +29,7 @@ router.post('/', async (req, res) => {
             password,
         } = req.body;
 
-        email = email.toLowerCase();
-
-        const existsUser = await User.findOne({ email });
+        const existsUser = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
         if (existsUser) {
             return res.status(401).json({ message: "Email already exists!" });
         }
@@ -50,6 +52,10 @@ router.post('/', async (req, res) => {
     }
 });
 
+
+// @route POST api/user/login
+// @desc login user
+// @access Public
 router.post('/login', async (req, res) => {
     try {
         let {
@@ -88,6 +94,10 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+// @route POST api/user/register
+// @desc create new Admin
+// @access Private
 router.post('/register', auth, async (req, res) => {
     try {
 
@@ -103,8 +113,7 @@ router.post('/register', auth, async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        email = email.toLowerCase();
-        const existsUser = await User.findOne({ email });
+        const existsUser = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
         if (existsUser) {
             return res.status(401).json({ message: "Email already exists!" });
         }
@@ -114,8 +123,8 @@ router.post('/register', auth, async (req, res) => {
         const newUser = new User({ firstName, lastName, email, role });
 
         newUser.password = await encryptPassowrd(password);
-        newUser.verificationToken = verifyTokens.verificationToken; // hmm
-        newUser.verificationTokenTimeStamp = verifyTokens.verificationTokenTimeStamp;
+        // newUser.verificationToken = verifyTokens.verificationToken; // hmm
+        // newUser.verificationTokenTimeStamp = verifyTokens.verificationTokenTimeStamp;
 
         await newUser.save();
         return res.status(200).json({
@@ -128,6 +137,9 @@ router.post('/register', auth, async (req, res) => {
 });
 
 
+// @route PUT api/user/change-password
+// @desc create new user
+// @access Private
 router.put('/change-password', auth, async (req, res) => {
     try {
         const {
@@ -149,7 +161,7 @@ router.put('/change-password', auth, async (req, res) => {
 
         const password = await encryptPassowrd(newPassword);
 
-        // await User.findByIdAndUpdate(user.id, { password });
+        await User.findByIdAndUpdate(user._id, { password });
 
         return res.status(200).json({
             message: "Password Changed successfully"
@@ -160,13 +172,65 @@ router.put('/change-password', auth, async (req, res) => {
     }
 });
 
-
-router.get('/', async (req, res) => {
+// @route GET api/user/:id
+// @desc get user by id
+// @access Private
+router.get('/:id', auth, async (req, res) => {
     try {
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({
+                message: "invalid User Id"
+            });
+        }
+        const user = await User.findById(ObjectId(req.params.id)).select("_id role email firstName lastName fullName");
         return res.status(200).json({
-            message: "it's working"
+            user
         });
     } catch (error) {
+        console.log({ error });
+        return res.status(500).json("500 Internal Server Error");
+    }
+})
+
+// @route DELETE api/user/:id
+// @desc delete user by id
+// @access Private
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        const _id = ObjectId(req.params.id);
+        const ifExists = await Category.findById({ _id });
+        if (!ifExists) {
+            return res.status(401).json({ message: `user does not exists!` });
+        }
+
+        await User.findByIdAndDelete(_id);
+        return res.status(200).json({
+            message: "User deleted Successfully!"
+        });
+
+    } catch (error) {
+        console.log({ error });
+        return res.status(500).json("500 Internal Server Error");
+    }
+})
+
+// @route GET api/user/
+// @desc get all users
+// @access Private
+router.get('/', auth, async (req, res) => {
+    try {
+        let data = null;
+        if (req.user.role === "admin") {
+            data = await User.find({}).select("_id role email firstName lastName fullName");
+        } else if (req.user.role === "user") {
+            data = await User.findById(ObjectId(req.user.userId)).select("_id role email firstName lastName fullName");
+        }
+        return res.status(200).json(data);
+    } catch (error) {
+        console.log({ error });
         return res.status(500).json("500 Internal Server Error");
     }
 })
