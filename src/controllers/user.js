@@ -11,8 +11,14 @@ const {
     verifyToken,
     encryptPassowrd,
     comparePassword,
+    validateInput,
 } = require('../middleware/common-functions')
 
+const {
+    UserSchema,
+    LoginSchema,
+    ChangePasswordSchema,
+} = require('../validations/Users')
 const router = express.Router();
 
 
@@ -22,12 +28,16 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     try {
 
-        let {
+        const validUser = validateInput(UserSchema, req.body);
+        if (!validUser.value) {
+            return res.status(403).json(validUser);
+        }
+        const {
             email,
             firstName,
             lastName,
             password,
-        } = req.body;
+        } = validUser.value;
 
         const existsUser = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
         if (existsUser) {
@@ -58,14 +68,18 @@ router.post('/', async (req, res) => {
 // @access Public
 router.post('/login', async (req, res) => {
     try {
-        let {
+
+        const validUser = validateInput(LoginSchema, req.body);
+        if (!validUser.value) {
+            return res.status(403).json(validUser);
+        }
+
+        const {
             email,
             password,
-        } = req.body;
+        } = validUser.value;
 
-        email = email.toLowerCase();
-
-        const existsUser = await User.findOne({ email });
+        const existsUser = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
         if (!existsUser) {
             return res.status(401).json({ message: "User Does not Exists!" });
         }
@@ -100,25 +114,29 @@ router.post('/login', async (req, res) => {
 // @access Private
 router.post('/register', auth, async (req, res) => {
     try {
+        if (req.user.role !== "admin" && role !== "admin") {
+            return res.status(401).json({ message: "Unauthorized" });
 
-        let {
+        }
+
+        const validUser = validateInput(UserSchema, req.body);
+        if (!validUser.value) {
+            return res.status(403).json(validUser);
+        }
+        const {
             email,
             firstName,
             lastName,
             password,
             role,
-        } = req.body;
-
-        if (req.user.role !== "admin" && role !== "admin") {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
+        } = validUser.value;
 
         const existsUser = await User.findOne({ email }).collation({ locale: 'en', strength: 2 });
         if (existsUser) {
             return res.status(401).json({ message: "Email already exists!" });
         }
 
-        const verifyTokens = verifyToken();
+        // const verifyTokens = verifyToken();
 
         const newUser = new User({ firstName, lastName, email, role });
 
@@ -142,10 +160,15 @@ router.post('/register', auth, async (req, res) => {
 // @access Private
 router.put('/change-password', auth, async (req, res) => {
     try {
+
+        const validUser = validateInput(ChangePasswordSchema, req.body);
+        if (!validUser.value) {
+            return res.status(403).json(validUser);
+        }
         const {
             oldPassword,
             newPassword,
-        } = req.body;
+        } = validUser.value;
 
         if (oldPassword === newPassword) {
             return res.status(401).json({ message: "Password cannot be the same!" });
@@ -193,15 +216,15 @@ router.get('/:id', auth, async (req, res) => {
 })
 
 // @route DELETE api/user/:id
-// @desc delete user by id
-// @access Private
+// @desc delete user by id admin access
+// @access Private 
 router.delete('/:id', auth, async (req, res) => {
     try {
         if (req.user.role !== "admin") {
             return res.status(401).json({ message: "Unauthorized" });
         }
         const _id = ObjectId(req.params.id);
-        const ifExists = await Category.findById({ _id });
+        const ifExists = await User.findById({ _id });
         if (!ifExists) {
             return res.status(401).json({ message: `user does not exists!` });
         }
