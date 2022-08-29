@@ -223,6 +223,11 @@ router.delete('/:id', auth, async (req, res) => {
         if (req.user.role !== "admin") {
             return res.status(401).json({ message: "Unauthorized" });
         }
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(404).json({
+                message: "invalid User Id"
+            });
+        }
         const _id = ObjectId(req.params.id);
         const ifExists = await User.findById({ _id });
         if (!ifExists) {
