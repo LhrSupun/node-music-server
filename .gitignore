@@ -1,4 +1,6 @@
+Music Server API.postman_collection.json
 node_modules/
+config/
 nodemon.json
 .env
 *.mongodb
