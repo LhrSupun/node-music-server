@@ -15,6 +15,8 @@
     "cors": "^2.8.5",
     "express": "^4.18.1",
     "fs": "^0.0.1-security",
+    "joi": "^17.6.0",
+    "joi-objectid": "^4.0.2",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.9.0",
     "mongoose": "^6.5.2",
