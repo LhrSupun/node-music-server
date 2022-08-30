@@ -114,11 +114,10 @@ router.post('/login', async (req, res) => {
 // @access Private
 router.post('/register', auth, async (req, res) => {
     try {
-        if (req.user.role !== "admin" && role !== "admin") {
+        if (req.user.role !== "admin") {
             return res.status(401).json({ message: "Unauthorized" });
 
         }
-
         const validUser = validateInput(UserSchema, req.body);
         if (!validUser.value) {
             return res.status(403).json(validUser);
@@ -250,6 +249,7 @@ router.delete('/:id', auth, async (req, res) => {
 // @access Private
 router.get('/', auth, async (req, res) => {
     try {
+        console.log(req.user);
         let data = null;
         if (req.user.role === "admin") {
             data = await User.find({}).select("_id role email firstName lastName fullName");

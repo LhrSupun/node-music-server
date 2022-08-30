@@ -14,7 +14,7 @@ const UserSchema = (data) => {
 
 const LoginSchema = (data) => {
     const Schema = Joi.object({
-        email: Joi.string().trim().lowercase().email(),
+        email: Joi.string().trim().lowercase().email().required(),
         password: Joi.string().trim().min(3).required(),
     }).unknown();
 

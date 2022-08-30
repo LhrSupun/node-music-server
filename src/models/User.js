@@ -19,11 +19,12 @@ const UserSchema = new Schema(
         lastSeen: {
             type: Date
         },
-        verificationTokenTimeStamp: {
-            type: Number,
-            default: 0
-        },
-        verificationToken: String,
+
+        // verificationTokenTimeStamp: {
+        //     type: Number,
+        //     default: 0
+        // },
+        // verificationToken: String,
     },
     {
         timestamps: true,
@@ -34,7 +35,9 @@ const UserSchema = new Schema(
             virtuals: true,
         },
     });
-UserSchema.virtual('fullName').get(() => `${this.firstName} ${this.lastName ? this.lastName : ""}`)
+UserSchema.virtual('fullName').get(function () { return `${this.firstName} ${this.lastName ? this.lastName : ""}` })
 
+UserSchema.index({ email: 1 },
+    { collation: { locale: 'en', strength: 2 }, unique: true })
 
 module.exports = mongoose.model("User", UserSchema);
